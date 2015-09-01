@@ -1,0 +1,34 @@
+{
+  "name": "bapmrl-react-multiselect",
+  "version": "1.0.0",
+  "description": "React Multiselect Component",
+  "main": "src/index.js",
+  "browserify": {
+    "transform": [
+      "babelify"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bapmrl/react-multiselect.git"
+  },
+  "keywords": [
+    "react",
+    "multiselect"
+  ],
+  "author": "Baptiste Morelle",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bapmrl/react-multiselect/issues"
+  },
+  "homepage": "https://github.com/bapmrl/react-multiselect#readme",
+  "dependencies": {
+    "babelify": "6.3.0"
+  },
+  "devDependencies": {
+    "browserify": "~11.0.1"
+  },
+  "peerDependencies": {
+    "react": ">= 0.13.0"
+  }
+}
