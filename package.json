@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bapmrl/react-multiselect.git"
+    "url": "git+https://github.com/bapmrl/bapmrl-react-multiselect.git"
   },
   "keywords": [
     "react",
@@ -19,9 +19,9 @@
   "author": "Baptiste Morelle",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/bapmrl/react-multiselect/issues"
+    "url": "https://github.com/bapmrl/bapmrl-react-multiselect/issues"
   },
-  "homepage": "https://github.com/bapmrl/react-multiselect#readme",
+  "homepage": "https://github.com/bapmrl/bapmrl-react-multiselect#readme",
   "dependencies": {
     "babelify": "6.3.0"
   },
