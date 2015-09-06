@@ -125,6 +125,7 @@ export default class Multiselect extends Component {
   }
 
   _handleDocumentMouseDown(e) {
+    e.preventDefault();
     const inputNode = React.findDOMNode(this.refs.input);
     const optionsNode = React.findDOMNode(this.refs.options);
     if (!e.path.find(n => n === inputNode || n === optionsNode)) {
