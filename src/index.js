@@ -222,17 +222,16 @@ export default class Multiselect extends Component {
   }
 
   _moveItemHover(delta) {
-    if (Array.isArray(this.props.items)) {
-      let optionHoverIndex = this.state.optionHoverIndex === null ?
-      (delta > 0 ? delta - 1 : delta) : this.state.optionHoverIndex + delta;
-      const length = this.props.items.length;
-      if (optionHoverIndex < 0) {
-        optionHoverIndex += length;
-      } else if (optionHoverIndex >= length) {
-        optionHoverIndex -= length;
+    const items = this.props.items;
+    if (Array.isArray(items)) {
+      let hover = this.state.optionHoverIndex;
+      hover = hover === null ? (delta > 0 ? delta - 1 : delta) : hover + delta;
+      if (hover < 0) {
+        hover = items.length - Math.abs(hover) % items.length;
+      } else if (hover >= items.length) {
+        hover = hover % items.length;
       }
-      this.setState({ optionHoverIndex });
-    } else {
+      this.setState({ optionHoverIndex : hover });
     }
   }
 
