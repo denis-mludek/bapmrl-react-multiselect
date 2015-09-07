@@ -42,7 +42,8 @@ export default class Multiselect extends Component {
             onBlur={this.state.focus ? this._handleInputBlur : null}
             onFocus={!this.state.focus ? this._handleInputFocus : null}
             onKeyDown={this.state.focus ? this._handleInputKeyDown : null}
-            readOnly={true} ref="input" spellCheck={false} type="text" />
+            readOnly={true} ref="input" spellCheck={false} type="text"
+            value={this._calculateInputValue()} />
           <span className={this.props.classNames.arrow} />
         </div>
         {this.renderList()}
@@ -68,7 +69,7 @@ export default class Multiselect extends Component {
       const group = groups[key];
       const className = [
         this.props.classNames.group,
-        !group.options.find(o => !o.selected) ?
+        _isAllItemsSelected(group.options) ?
         this.props.classNames.itemSelect : '',
         (
           index === this.state.groupHoverIndex &&
@@ -221,6 +222,27 @@ export default class Multiselect extends Component {
     this.setState({ groupHoverIndex: null, optionHoverIndex: null });
   }
 
+  _calculateInputValue() {
+    const items = this.props.items;
+    if (this.props.allItemsSelectedLabel && _isAllItemsSelected(items)) {
+      return this.props.allItemsSelectedLabel;
+    } else {
+      const dst = [];
+      if (Array.isArray(items)) {
+        _pushSelectedLabels(items, dst, this.props.inputProps.size);
+      } else {
+        Object.keys(items).forEach(i => {
+          _pushSelectedLabels(
+            items[i].options,
+            dst,
+            this.props.inputProps.size
+          );
+        });
+      }
+      return dst.join(', ');
+    }
+  }
+
   _moveItemHover(delta) {
     const items = this.props.items;
     if (Array.isArray(items)) {
@@ -247,8 +269,11 @@ export default class Multiselect extends Component {
       const key = Object.keys(items)[groupIndex];
       const options = items[key].options;
       if (optionIndex === null) {
-        const selected = !!options.find(o => !o.selected);
-        this.props.onItemSelected({ items, key, selected });
+        this.props.onItemSelected({
+          items,
+          key,
+          selected: !_isAllItemsSelected(options)
+        });
       } else {
         this.props.onItemSelected({
           items,
@@ -261,7 +286,26 @@ export default class Multiselect extends Component {
   }
 }
 
+function _isAllItemsSelected(items) {
+  return Array.isArray(items) ?
+  !items.find(i => !i.selected) : !Object.keys(items).find(i =>
+    !_isAllItemsSelected(items[i].options)
+  );
+}
+
+function _pushSelectedLabels(options, dst, size) {
+  let o, length;
+  for (
+    o = 0, length = dst.reduce((length, str) => length + str.length, 0);
+    o < options.length && length < size;
+    ++o
+  ) {
+    if (options[o].selected) { dst.push(options[o].label); }
+  }
+}
+
 Multiselect.propTypes = {
+  allItemsSelectedLabel: PropTypes.string,
   classNames: PropTypes.shape({
     arrow: PropTypes.string,
     checkbox: PropTypes.string,
@@ -281,7 +325,7 @@ Multiselect.propTypes = {
     disabled: PropTypes.bool,
     maxLength: PropTypes.number,
     placeholder: PropTypes.string,
-    size: PropTypes.number
+    size: PropTypes.number.isRequired
   }),
   items: PropTypes.oneOfType(
     PropTypes.arrayOf(
@@ -328,7 +372,7 @@ Multiselect.defaultProps = {
     disabled: false,
     maxLength: null,
     placeholder: '',
-    size: 20
+    size: 100
   },
   onItemSelected: () => {}
 };
