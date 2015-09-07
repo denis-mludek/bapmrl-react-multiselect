@@ -228,18 +228,15 @@ export default class Multiselect extends Component {
       return this.props.allItemsSelectedLabel;
     } else {
       const dst = [];
+      const size = this.props.inputProps.size;
       if (Array.isArray(items)) {
-        _pushSelectedLabels(items, dst, this.props.inputProps.size);
+        _pushSelectedLabels(items, dst, size);
       } else {
         Object.keys(items).forEach(i => {
-          _pushSelectedLabels(
-            items[i].options,
-            dst,
-            this.props.inputProps.size
-          );
+          _pushSelectedLabels(items[i].options, dst, size);
         });
       }
-      return dst.join(', ');
+      return dst.join(', ').substring(0, size);
     }
   }
 
@@ -296,9 +293,9 @@ function _isAllItemsSelected(items) {
 function _pushSelectedLabels(options, dst, size) {
   let o, length;
   for (
-    o = 0, length = dst.reduce((length, str) => length + str.length, 0);
+    o = 0, length = 0;
     o < options.length && length < size;
-    ++o
+    ++o, length = dst.reduce((length, str) => length + str.length, 0)
   ) {
     if (options[o].selected) { dst.push(options[o].label); }
   }
