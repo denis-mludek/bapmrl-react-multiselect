@@ -1,14 +1,21 @@
 import React, { Component, PropTypes } from 'react';
+import { shallowEqual } from './utils';
 
 export default class Multiselect extends Component {
   constructor(props) {
     super(props);
 
+    this._items = _prepareItems(props.items);
+    this._inputValue = _calculateInputValue(
+      this._items,
+      props.inputProps.size,
+      props.allItemsSelectedLabel
+    );
+
     this.state = {
       focus: props.inputProps.autoFocus,
       open: false,
-      groupHoverIndex: null,
-      optionHoverIndex: null
+      hoverIndex: null
     };
 
     this._handleDocumentMouseDown = this._handleDocumentMouseDown.bind(this);
@@ -16,7 +23,7 @@ export default class Multiselect extends Component {
     this._handleInputFocus = this._handleInputFocus.bind(this);
     this._handleInputKeyDown = this._handleInputKeyDown.bind(this);
     this._handleInputOrArrowMouseDown = this._handleInputOrArrowMouseDown.bind(this);
-    this._handleOptionsMouseLeave = this._handleOptionsMouseLeave.bind(this);
+    this._handleItemsMouseLeave = this._handleItemsMouseLeave.bind(this);
     this._inputKeyDownHandlers = {
       13: this._handleInputReturn,
       27: this._handleInputEscape,
@@ -43,68 +50,35 @@ export default class Multiselect extends Component {
             onFocus={!this.state.focus ? this._handleInputFocus : null}
             onKeyDown={this.state.focus ? this._handleInputKeyDown : null}
             readOnly={true} ref="input" spellCheck={false} type="text"
-            value={this._calculateInputValue()} />
+            value={this._inputValue} />
           <span className={this.props.classNames.arrow} />
         </div>
-        {this.renderList()}
+        {this._renderList()}
       </div>
     );
   }
 
-  renderList() {
+  _renderList() {
     return this.state.open ? (
       <ul className={this.props.classNames.items}
-        onMouseLeave={this._handleOptionsMouseLeave} ref="options">
-        {
-          Array.isArray(this.props.items) ?
-           this.renderOptions(this.props.items, null) :
-           this.renderGroups(this.props.items)
-        }
+        onMouseLeave={this._handleItemsMouseLeave} ref="items">
+        {this._renderListItems()}
       </ul>
     ) : null;
   }
 
-  renderGroups(groups) {
-    return Object.keys(groups).map((key, index) => {
-      const group = groups[key];
+  _renderListItems() {
+    return this._items.map((item, i) => {
       const className = [
-        this.props.classNames.group,
-        _isAllItemsSelected(group.options) ?
-        this.props.classNames.itemSelect : '',
-        (
-          index === this.state.groupHoverIndex &&
-          this.state.optionHoverIndex === null
-        ) ? this.props.classNames.itemHover : ''
+        item.options ? this.props.classNames.group : this.props.classNames.option,
+        item.selected ? this.props.classNames.itemSelect : '',
+        i === this.state.hoverIndex ? this.props.classNames.itemHover : ''
       ].join(' ');
       return (
-        <div key={group.key}>
-          <li className={className}
-            onMouseDown={this._handleItemMouseDown(index, null)}
-            onMouseMove={this._handleItemMouseMove(index, null)}>
-            <span className={this.props.classNames.label}>{group.label}</span>
-            <span className={this.props.classNames.checkbox}></span>
-          </li>
-          {this.renderOptions(group.options, index)}
-        </div>
-      );
-    }.bind(this));
-  }
-
-  renderOptions(options, groupIndex) {
-    return options.map((option, optionIndex) => {
-      const className = [
-        this.props.classNames.option,
-        option.selected ? this.props.classNames.itemSelect : '',
-        (
-          groupIndex === this.state.groupHoverIndex &&
-          optionIndex === this.state.optionHoverIndex
-        ) ? this.props.classNames.itemHover : ''
-      ].join(' ');
-      return (
-        <li className={className} key={option.key}
-          onMouseDown={this._handleItemMouseDown(groupIndex, optionIndex)}
-          onMouseMove={this._handleItemMouseMove(groupIndex, optionIndex)}>
-          <span className={this.props.classNames.label}>{option.label}</span>
+        <li className={className} key={item.key}
+          onMouseDown={this._handleItemMouseDown(i)}
+          onMouseMove={this._handleItemMouseMove(i)}>
+          <span className={this.props.classNames.label}>{item.label}</span>
           <span className={this.props.classNames.checkbox}></span>
         </li>
       );
@@ -121,15 +95,34 @@ export default class Multiselect extends Component {
     }
   }
 
+  componentWillReceiveProps(nextProps) {
+    if (this.props.items !== nextProps.items) {
+      this._items = _prepareItems(nextProps.items);
+      this._inputValue = _calculateInputValue(
+        this._items,
+        nextProps.inputProps.size,
+        nextProps.allItemsSelectedLabel
+      );
+    }
+  }
+
   componentWillUnmount() {
     document.removeEventListener('mousedown', this._handleDocumentMouseDown);
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    return this.props.allItemsSelectedLabel !== nextProps.allItemsSelectedLabel ||
+      !shallowEqual(this.props.classNames, nextProps.classNames) ||
+      !shallowEqual(this.props.inputProps, nextProps.inputProps) ||
+      this.props.items !== nextProps.items ||
+      !shallowEqual(this.state, nextState);
   }
 
   _handleDocumentMouseDown(e) {
     e.preventDefault();
     const inputNode = React.findDOMNode(this.refs.input);
-    const optionsNode = React.findDOMNode(this.refs.options);
-    if (!e.path.find(n => n === inputNode || n === optionsNode)) {
+    const itemsNode = React.findDOMNode(this.refs.items);
+    if (!e.path.find(n => n === inputNode || n === itemsNode)) {
       this.setState({ focus: false, open: false });
     }
   }
@@ -153,21 +146,12 @@ export default class Multiselect extends Component {
   }
 
   _handleInputBlur() {
-    this.setState({
-      focus: false,
-      open: false,
-      groupHoverIndex: null,
-      optionHoverIndex: null
-    });
+    this.setState({ focus: false, open: false, hoverIndex: null });
   }
 
   _handleInputEscape() {
     if (this.state.open) {
-      this.setState({
-        open: false,
-        groupHoverIndex: null,
-        optionHoverIndex: null
-      });
+      this.setState({ open: false, hoverIndex: null });
     }
   }
 
@@ -190,114 +174,105 @@ export default class Multiselect extends Component {
 
   _handleInputReturn(e) {
     e.preventDefault();
-    const groupHoverIndex = this.state.groupHoverIndex;
-    const optionHoverIndex = this.state.optionHoverIndex;
-    if (groupHoverIndex !== null || optionHoverIndex !== null) {
-      this._selectItem(groupHoverIndex, optionHoverIndex);
+    const hoverIndex = this.state.hoverIndex;
+    if (hoverIndex !== null) {
+      this._selectItem(hoverIndex);
     }
   }
 
-  _handleItemMouseDown(groupIndex, optionIndex) {
+  _handleItemMouseDown(index) {
     return e => {
       e.preventDefault();
-      this._selectItem(groupIndex, optionIndex);
+      this._selectItem(index);
     };
   }
 
-  _handleItemMouseMove(groupIndex, optionIndex) {
+  _handleItemMouseMove(index) {
     return () => {
-      if (
-        groupIndex !== this.state.groupHoverIndex ||
-        optionIndex !== this.state.optionHoverIndex
-      ) {
-        this.setState({
-          groupHoverIndex: groupIndex,
-          optionHoverIndex: optionIndex
-        });
+      if (index !== this.state.hoverIndex) {
+        this.setState({ hoverIndex: index });
       }
     }
   }
 
-  _handleOptionsMouseLeave() {
-    this.setState({ groupHoverIndex: null, optionHoverIndex: null });
-  }
-
-  _calculateInputValue() {
-    const items = this.props.items;
-    if (this.props.allItemsSelectedLabel && _isAllItemsSelected(items)) {
-      return this.props.allItemsSelectedLabel;
-    } else {
-      const dst = [];
-      const size = this.props.inputProps.size;
-      if (Array.isArray(items)) {
-        _pushSelectedLabels(items, dst, size);
-      } else {
-        Object.keys(items).forEach(i => {
-          _pushSelectedLabels(items[i].options, dst, size);
-        });
-      }
-      return dst.join(', ').substring(0, size);
-    }
+  _handleItemsMouseLeave() {
+    this.setState({ hoverIndex: null });
   }
 
   _moveItemHover(delta) {
-    const items = this.props.items;
-    if (Array.isArray(items)) {
-      let hover = this.state.optionHoverIndex;
-      hover = hover === null ? (delta > 0 ? delta - 1 : delta) : hover + delta;
-      if (hover < 0) {
-        hover = items.length - Math.abs(hover) % items.length;
-      } else if (hover >= items.length) {
-        hover = hover % items.length;
-      }
-      this.setState({ optionHoverIndex : hover });
+    const items = this._items;
+    let hover = this.state.hoverIndex;
+    hover = hover === null ? (delta > 0 ? delta - 1 : delta) : hover + delta;
+    if (hover < 0) {
+      hover = items.length - Math.abs(hover) % items.length;
+    } else if (hover >= items.length) {
+      hover = hover % items.length;
     }
+    this.setState({ hoverIndex : hover });
   }
 
-  _selectItem(groupIndex, optionIndex) {
-    const items = this.props.items;
-    if (Array.isArray(items)) {
-      this.props.onItemSelected({
-        items,
-        index: optionIndex,
-        selected: !items[optionIndex].selected
-      });
-    } else {
-      const key = Object.keys(items)[groupIndex];
-      const options = items[key].options;
-      if (optionIndex === null) {
-        this.props.onItemSelected({
-          items,
-          key,
-          selected: !_isAllItemsSelected(options)
-        });
-      } else {
-        this.props.onItemSelected({
-          items,
-          key,
-          index: optionIndex,
-          selected: !options[optionIndex].selected
-        });
-      }
-    }
+  _selectItem(index) {
+    const item = this._items[index];
+    this.props.onItemSelected({
+      items: this.props.items,
+      ...item.initialLocation,
+      selected: !item.selected
+    });
   }
 }
 
-function _isAllItemsSelected(items) {
-  return Array.isArray(items) ?
-  !items.find(i => !i.selected) : !Object.keys(items).find(i =>
-    !_isAllItemsSelected(items[i].options)
-  );
+function _prepareItems(items) {
+  if (Array.isArray(items)) {
+    return items.map((option, o) => {
+      return {
+        key: option.key,
+        label: option.label,
+        selected: option.selected,
+        initialLocation: { index: o }
+      };
+    });
+  } else {
+    return Array.prototype.concat.apply([], Object.keys(items).map(g => {
+      const group = items[g];
+      return [].concat(
+        {
+          key: group.key,
+          label: group.label,
+          options: group.options,
+          selected: !group.options.find(option => !option.selected),
+          initialLocation: { key: g }
+        },
+        group.options.map((option, o) => {
+          return {
+            key: `${group.key}-${option.key}`,
+            label: option.label,
+            selected: option.selected,
+            initialLocation: { key: g, index: o }
+          };
+        })
+      );
+    }));
+  }
 }
 
-function _pushSelectedLabels(options, dst, size) {
-  let o, length;
-  for (
-    o = 0, length = 0;
-    o < options.length && length < size;
-    ++o, length = dst.reduce((length, str) => length + str.length, 0)
-  ) {
-    if (options[o].selected) { dst.push(options[o].label); }
+function _calculateInputValue(items, size, allItemsSelectedLabel) {
+  if (allItemsSelectedLabel && !items.find(i => !i.selected)) {
+    return allItemsSelectedLabel;
+  } else {
+    const dst = [];
+    let i = 0, length = 0;
+    while (i < items.length && length < size) {
+      const item = items[i];
+      if (item.selected) {
+        dst.push(item.label);
+        if (item.options) {
+          i += item.options.length;
+        }
+      }
+      ++i;
+      length = dst.reduce((length, str) => length + str.length, 0);
+    }
+    return dst.join(', ').substring(0, size);
   }
 }
 
