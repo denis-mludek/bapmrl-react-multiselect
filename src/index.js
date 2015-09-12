@@ -122,7 +122,7 @@ export default class Multiselect extends Component {
   }
 
   componentWillUnmount() {
-    document.removeEventListener('click', this._handleDocumentMouseDown);
+    document.removeEventListener('mousedown', this._handleDocumentMouseDown);
   }
 
   _handleDocumentMouseDown(e) {
