@@ -1,12 +1,12 @@
 import React, { Component, PropTypes } from 'react';
-import { shallowEqual } from './utils';
+import shallowEqual from './shallowEqual';
 
 export default class Multiselect extends Component {
   constructor(props) {
     super(props);
 
-    this._items = _prepareItems(props.items);
-    this._inputValue = _calculateInputValue(
+    this._items = _normalizeItems(props.items);
+    this._selectedItemsInputValue = _calculateSelectedItemsInputValue(
       this._items,
       props.inputProps.size,
       props.allItemsSelectedLabel
@@ -50,7 +50,7 @@ export default class Multiselect extends Component {
             onFocus={!this.state.focus ? this._handleInputFocus : null}
             onKeyDown={this.state.focus ? this._handleInputKeyDown : null}
             readOnly={true} ref="input" spellCheck={false} type="text"
-            value={this._inputValue} />
+            value={this._selectedItemsInputValue} />
           <span className={this.props.classNames.arrow} />
         </div>
         {this._renderList()}
@@ -98,8 +98,8 @@ export default class Multiselect extends Component {
   componentWillReceiveProps(nextProps) {
     if (this.props.items !== nextProps.items) {
       const prevItems = this._items;
-      this._items = _prepareItems(nextProps.items);
-      this._inputValue = _calculateInputValue(
+      this._items = _normalizeItems(nextProps.items);
+      this._selectedItemsInputValue = _calculateSelectedItemsInputValue(
         this._items,
         nextProps.inputProps.size,
         nextProps.allItemsSelectedLabel
@@ -136,7 +136,7 @@ export default class Multiselect extends Component {
     if (!this.state.open) {
       this.setState({ open: true });
     } else {
-      this._moveItemHover(1);
+      this._moveHover(1);
     }
   }
 
@@ -145,7 +145,7 @@ export default class Multiselect extends Component {
     if (!this.state.open) {
       this.setState({ open: true });
     } else {
-      this._moveItemHover(-1);
+      this._moveHover(-1);
     }
   }
 
@@ -203,7 +203,7 @@ export default class Multiselect extends Component {
     this.setState({ hoverIndex: null });
   }
 
-  _moveItemHover(delta) {
+  _moveHover(delta) {
     const items = this._items;
     let hover = this.state.hoverIndex;
     hover = hover === null ? (delta > 0 ? delta - 1 : delta) : hover + delta;
@@ -225,7 +225,7 @@ export default class Multiselect extends Component {
   }
 }
 
-function _prepareItems(items) {
+function _normalizeItems(items) {
   if (Array.isArray(items)) {
     return items.map((option, o) => {
       return {
@@ -259,7 +259,7 @@ function _prepareItems(items) {
   }
 }
 
-function _calculateInputValue(items, size, allItemsSelectedLabel) {
+function _calculateSelectedItemsInputValue(items, size, allItemsSelectedLabel) {
   if (allItemsSelectedLabel && !items.find(i => !i.selected)) {
     return allItemsSelectedLabel;
   } else {

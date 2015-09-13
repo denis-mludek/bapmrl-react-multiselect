@@ -2,7 +2,7 @@
   "name": "bapmrl-react-multiselect",
   "version": "1.0.0",
   "description": "React Multiselect Component",
-  "main": "src/index.js",
+  "main": "src/Autocomplete.js",
   "browserify": {
     "transform": [
       "babelify"
