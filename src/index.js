@@ -97,12 +97,16 @@ export default class Multiselect extends Component {
 
   componentWillReceiveProps(nextProps) {
     if (this.props.items !== nextProps.items) {
+      const prevItems = this._items;
       this._items = _prepareItems(nextProps.items);
       this._inputValue = _calculateInputValue(
         this._items,
         nextProps.inputProps.size,
         nextProps.allItemsSelectedLabel
       );
+      if (this._items.length > prevItems.length) {
+        this.setState({ hoverIndex: null });
+      }
     }
   }
 
