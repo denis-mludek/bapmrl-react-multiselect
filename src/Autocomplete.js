@@ -1,25 +1,30 @@
 import React, { Component, PropTypes } from 'react';
+
 import shallowEqual from './shallowEqual';
 
 export default class Multiselect extends Component {
   constructor(props) {
     super(props);
 
-    this._items = _normalizeItems(props.items);
+    this._normalizedItems = _normalizeItems(props.items);
     this._selectedItemsInputValue = _calculateSelectedItemsInputValue(
-      this._items,
+      this._normalizedItems,
       props.inputProps.size,
       props.allItemsSelectedLabel
     );
 
+    const filterInputValue = '';
     this.state = {
-      focus: props.inputProps.autoFocus,
+      focus: !!props.inputProps.autoFocus,
       open: false,
+      filterInputValue,
+      filteredItems: _filterItems(filterInputValue, this._normalizedItems),
       hoverIndex: null
     };
 
     this._handleDocumentMouseDown = this._handleDocumentMouseDown.bind(this);
     this._handleInputBlur = this._handleInputBlur.bind(this);
+    this._handleInputChange = this._handleInputChange.bind(this);
     this._handleInputFocus = this._handleInputFocus.bind(this);
     this._handleInputKeyDown = this._handleInputKeyDown.bind(this);
     this._handleInputOrArrowMouseDown = this._handleInputOrArrowMouseDown.bind(this);
@@ -40,17 +45,16 @@ export default class Multiselect extends Component {
     ].join(' ');
     return (
       <div className={className}>
-        <div onMouseDown={
-            !this.state.open ? this._handleInputOrArrowMouseDown : null
-          }>
+        <div onMouseDown={!this.state.open ? this._handleInputOrArrowMouseDown : null}>
           <input {...this.props.inputProps} autoCapitalize="none"
             autoComplete="off" autoCorrect="off"
             className={this.props.classNames.input}
             onBlur={this.state.focus ? this._handleInputBlur : null}
+            onChange={this._handleInputChange}
             onFocus={!this.state.focus ? this._handleInputFocus : null}
-            onKeyDown={this.state.focus ? this._handleInputKeyDown : null}
-            readOnly={true} ref="input" spellCheck={false} type="text"
-            value={this._selectedItemsInputValue} />
+            onKeyDown={this._handleInputKeyDown}
+            ref="input" spellCheck={false} type="text"
+            value={this.state.focus ? this.state.filterInputValue : this._selectedItemsInputValue} />
           <span className={this.props.classNames.arrow} />
         </div>
         {this._renderList()}
@@ -68,7 +72,7 @@ export default class Multiselect extends Component {
   }
 
   _renderListItems() {
-    return this._items.map((item, i) => {
+    return this.state.filteredItems.map((item, i) => {
       const className = [
         item.options ? this.props.classNames.group : this.props.classNames.option,
         item.selected ? this.props.classNames.itemSelect : '',
@@ -97,16 +101,18 @@ export default class Multiselect extends Component {
 
   componentWillReceiveProps(nextProps) {
     if (this.props.items !== nextProps.items) {
-      const prevItems = this._items;
-      this._items = _normalizeItems(nextProps.items);
+      this._normalizedItems = _normalizeItems(nextProps.items);
       this._selectedItemsInputValue = _calculateSelectedItemsInputValue(
-        this._items,
+        this._normalizedItems,
         nextProps.inputProps.size,
         nextProps.allItemsSelectedLabel
       );
-      if (this._items.length > prevItems.length) {
-        this.setState({ hoverIndex: null });
-      }
+      const filteredItems = _filterItems(
+        this.state.filterInputValue,
+        this._normalizedItems
+      );
+      const hoverIndex = filteredItems.length === this.state.filteredItems.length ? this.state.hoverIndex : null;
+      this.setState({ filteredItems, hoverIndex });
     }
   }
 
@@ -127,7 +133,13 @@ export default class Multiselect extends Component {
     const inputNode = React.findDOMNode(this.refs.input);
     const itemsNode = React.findDOMNode(this.refs.items);
     if (!e.path.find(n => n === inputNode || n === itemsNode)) {
-      this.setState({ focus: false, open: false });
+      inputNode.blur();
+      this.setState({
+        focus: false,
+        open: false,
+        filteredItems: this._normalizedItems,
+        filterInputValue: ''
+      });
     }
   }
 
@@ -150,7 +162,20 @@ export default class Multiselect extends Component {
   }
 
   _handleInputBlur() {
-    this.setState({ focus: false, open: false, hoverIndex: null });
+    this.setState({
+      focus: false,
+      open: false,
+      filteredItems: this._normalizedItems,
+      filterInputValue: '',
+      hoverIndex: null
+    });
+  }
+
+  _handleInputChange(e) {
+    const filterInputValue = e.target.value;
+    const filteredItems = _filterItems(filterInputValue, this._normalizedItems);
+    const hoverIndex = filteredItems.length === this.state.filteredItems.length ? this.state.hoverIndex : null;
+    this.setState({ open: true, filterInputValue, filteredItems, hoverIndex });
   }
 
   _handleInputEscape() {
@@ -204,7 +229,7 @@ export default class Multiselect extends Component {
   }
 
   _moveHover(delta) {
-    const items = this._items;
+    const items = this.state.filteredItems;
     let hover = this.state.hoverIndex;
     hover = hover === null ? (delta > 0 ? delta - 1 : delta) : hover + delta;
     if (hover < 0) {
@@ -216,12 +241,33 @@ export default class Multiselect extends Component {
   }
 
   _selectItem(index) {
-    const item = this._items[index];
+    const item = this.state.filteredItems[index];
     this.props.onItemSelected({
       items: this.props.items,
       ...item.initialLocation,
       selected: !item.selected
     });
+  }
+}
+
+function _calculateSelectedItemsInputValue(items, size, allItemsSelectedLabel) {
+  if (allItemsSelectedLabel && !items.find(i => !i.selected)) {
+    return allItemsSelectedLabel;
+  } else {
+    const dst = [];
+    let i = 0, length = 0;
+    while (i < items.length && length < size) {
+      const item = items[i];
+      if (item.selected) {
+        dst.push(item.label);
+        if (item.options) {
+          i += item.options.length;
+        }
+        length += item.label.length;
+      }
+      ++i;
+    }
+    return dst.join(', ').substring(0, size);
   }
 }
 
@@ -259,24 +305,12 @@ function _normalizeItems(items) {
   }
 }
 
-function _calculateSelectedItemsInputValue(items, size, allItemsSelectedLabel) {
-  if (allItemsSelectedLabel && !items.find(i => !i.selected)) {
-    return allItemsSelectedLabel;
+function _filterItems(filter, items) {
+  if (filter.length) {
+    filter = filter.trim().toLowerCase();
+    return items.filter(i => i.label.trim().toLowerCase().indexOf(filter) >= 0);
   } else {
-    const dst = [];
-    let i = 0, length = 0;
-    while (i < items.length && length < size) {
-      const item = items[i];
-      if (item.selected) {
-        dst.push(item.label);
-        if (item.options) {
-          i += item.options.length;
-        }
-      }
-      ++i;
-      length = dst.reduce((length, str) => length + str.length, 0);
-    }
-    return dst.join(', ').substring(0, size);
+    return items;
   }
 }
 
