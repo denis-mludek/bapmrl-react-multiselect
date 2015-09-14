@@ -129,7 +129,6 @@ export default class Multiselect extends Component {
   }
 
   _handleDocumentMouseDown(e) {
-    e.preventDefault();
     const inputNode = React.findDOMNode(this.refs.input);
     const itemsNode = React.findDOMNode(this.refs.items);
     if (!e.path.find(n => n === inputNode || n === itemsNode)) {
@@ -140,6 +139,8 @@ export default class Multiselect extends Component {
         filteredItems: this._normalizedItems,
         filterInputValue: ''
       });
+    } else if (e.path.find(n => n === itemsNode)) {
+      e.preventDefault();
     }
   }
 
