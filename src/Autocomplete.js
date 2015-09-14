@@ -251,7 +251,7 @@ export default class Multiselect extends Component {
 }
 
 function _calculateSelectedItemsInputValue(items, size, allItemsSelectedLabel) {
-  if (allItemsSelectedLabel && !items.find(i => !i.selected)) {
+  if (allItemsSelectedLabel && items.length && !items.find(i => !i.selected)) {
     return allItemsSelectedLabel;
   } else {
     const dst = [];
