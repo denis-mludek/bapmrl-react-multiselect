@@ -53,8 +53,9 @@ export default class Multiselect extends Component {
             onChange={this._handleInputChange}
             onFocus={!this.state.focus ? this._handleInputFocus : null}
             onKeyDown={this._handleInputKeyDown}
-            ref="input" spellCheck={false} type="text"
-            value={this.state.focus ? this.state.filterInputValue : this._selectedItemsInputValue} />
+            readOnly={!this.props.filterable} ref="input" spellCheck={false}
+            type="text"
+            value={this.props.filterable && this.state.focus ? this.state.filterInputValue : this._selectedItemsInputValue} />
           <span className={this.props.classNames.arrow} />
         </div>
         {this._renderList()}
@@ -123,6 +124,7 @@ export default class Multiselect extends Component {
   shouldComponentUpdate(nextProps, nextState) {
     return this.props.allItemsSelectedLabel !== nextProps.allItemsSelectedLabel ||
       !shallowEqual(this.props.classNames, nextProps.classNames) ||
+      this.props.filterable !== nextProps.filterable ||
       !shallowEqual(this.props.inputProps, nextProps.inputProps) ||
       this.props.items !== nextProps.items ||
       !shallowEqual(this.state, nextState);
@@ -331,6 +333,7 @@ Multiselect.propTypes = {
     multiselectOpen: PropTypes.string,
     option: PropTypes.string
   }),
+  filterable: PropTypes.bool.isRequired,
   inputProps: PropTypes.shape({
     autoFocus: PropTypes.bool,
     disabled: PropTypes.bool,
@@ -378,6 +381,7 @@ Multiselect.defaultProps = {
     multiselectOpen: 'multiselectOpen',
     option: 'multiselectOption'
   },
+  filterable: true,
   inputProps: {
     autoFocus: false,
     disabled: false,
