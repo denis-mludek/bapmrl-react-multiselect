@@ -45,14 +45,15 @@ export default class Multiselect extends Component {
     ].join(' ');
     return (
       <div className={className}>
-        <div onMouseDown={!this.state.open ? this._handleInputOrArrowMouseDown : null}>
+        <div onMouseDown={!this.state.open && !this.props.disabled ? this._handleInputOrArrowMouseDown : null}>
           <input {...this.props.inputProps} autoCapitalize="none"
+            disabled={this.props.disabled}
             autoComplete="off" autoCorrect="off"
             className={this.props.classNames.input}
             onBlur={this.state.focus ? this._handleInputBlur : null}
             onChange={this._handleInputChange}
-            onFocus={!this.state.focus ? this._handleInputFocus : null}
-            onKeyDown={this._handleInputKeyDown}
+            onFocus={!this.state.focus && !this.props.disabled ? this._handleInputFocus : null}
+            onKeyDown={!this.props.disabled ? this._handleInputKeyDown : null}
             readOnly={!this.props.filterable} ref="input" spellCheck={false}
             type="text"
             value={this.props.filterable && this.state.focus ? this.state.filterInputValue : this._selectedItemsInputValue} />
@@ -64,7 +65,7 @@ export default class Multiselect extends Component {
   }
 
   _renderList() {
-    return this.state.open ? (
+    return this.state.open && !this.props.disabled ? (
       <ul className={this.props.classNames.items}
         onMouseLeave={this._handleItemsMouseLeave} ref="items">
         {this._renderListItems()}
@@ -188,7 +189,7 @@ export default class Multiselect extends Component {
   }
 
   _handleInputFocus() {
-    this.setState({ focus: true })
+    this.setState({ focus: true });
   }
 
   _handleInputKeyDown(e) {
@@ -224,7 +225,7 @@ export default class Multiselect extends Component {
       if (index !== this.state.hoverIndex) {
         this.setState({ hoverIndex: index });
       }
-    }
+    };
   }
 
   _handleItemsMouseLeave() {
@@ -336,7 +337,6 @@ Multiselect.propTypes = {
   filterable: PropTypes.bool.isRequired,
   inputProps: PropTypes.shape({
     autoFocus: PropTypes.bool,
-    disabled: PropTypes.bool,
     maxLength: PropTypes.number,
     placeholder: PropTypes.string,
     size: PropTypes.number.isRequired
@@ -363,6 +363,7 @@ Multiselect.propTypes = {
       })
     )
   ).isRequired,
+  disabled: PropTypes.bool,
   onItemSelected: PropTypes.func
 };
 
@@ -384,10 +385,10 @@ Multiselect.defaultProps = {
   filterable: true,
   inputProps: {
     autoFocus: false,
-    disabled: false,
     maxLength: null,
     placeholder: '',
     size: 100
   },
+  disabled: false,
   onItemSelected: () => {}
 };
