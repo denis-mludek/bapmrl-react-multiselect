@@ -262,11 +262,8 @@ function _calculateSelectedItemsInputValue(items, size, allItemsSelectedLabel) {
     let i = 0, length = 0;
     while (i < items.length && length < size) {
       const item = items[i];
-      if (item.selected) {
+      if (!item.options && item.selected) {
         dst.push(item.label);
-        if (item.options) {
-          i += item.options.length;
-        }
         length += item.label.length;
       }
       ++i;
