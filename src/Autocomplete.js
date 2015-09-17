@@ -338,7 +338,7 @@ Multiselect.propTypes = {
     placeholder: PropTypes.string,
     size: PropTypes.number.isRequired
   }),
-  items: PropTypes.oneOfType(
+  items: PropTypes.oneOfType([
     PropTypes.arrayOf(
       PropTypes.shape({
         key: PropTypes.string.isRequired,
@@ -359,7 +359,7 @@ Multiselect.propTypes = {
         ).isRequired
       })
     )
-  ).isRequired,
+  ]).isRequired,
   disabled: PropTypes.bool,
   onItemSelected: PropTypes.func
 };
