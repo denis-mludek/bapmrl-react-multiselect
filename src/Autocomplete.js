@@ -40,6 +40,7 @@ export default class Multiselect extends Component {
   render() {
     const className = [
       this.props.classNames.multiselect,
+      this.props.disabled ? this.props.classNames.multiselectDisabled : '',
       this.state.focus ? this.props.classNames.multiselectFocus : '',
       this.state.open ? this.props.classNames.multiselectOpen : ''
     ].join(' ');
@@ -334,6 +335,7 @@ Multiselect.propTypes = {
     itemSelect: PropTypes.string,
     label: PropTypes.string,
     multiselect: PropTypes.string,
+    multiselectDisabled: PropTypes.string,
     multiselectFocus: PropTypes.string,
     multiselectOpen: PropTypes.string,
     option: PropTypes.string
@@ -382,6 +384,7 @@ Multiselect.defaultProps = {
     itemSelect: 'multiselectItemSelect',
     label: 'multiselectLabel',
     multiselect: 'multiselect',
+    multiselectDisabled: 'multiselectDisabled',
     multiselectFocus: 'multiselectFocus',
     multiselectOpen: 'multiselectOpen',
     option: 'multiselectOption'
