@@ -43,20 +43,19 @@ export default class Multiselect extends Component {
       this.state.focus ? this.props.classNames.multiselectFocus : '',
       this.state.open ? this.props.classNames.multiselectOpen : ''
     ].join(' ');
+    const value = this.props.filterable && this.state.focus ?
+      this.state.filterInputValue : this._selectedItemsInputValue;
     return (
       <div className={className}>
-        <div onMouseDown={!this.state.open && !this.props.disabled ? this._handleInputOrArrowMouseDown : null}>
+        <div onMouseDown={this._handleInputOrArrowMouseDown}>
           <input {...this.props.inputProps} autoCapitalize="none"
-            disabled={this.props.disabled}
             autoComplete="off" autoCorrect="off"
             className={this.props.classNames.input}
-            onBlur={this.state.focus ? this._handleInputBlur : null}
-            onChange={this._handleInputChange}
-            onFocus={!this.state.focus && !this.props.disabled ? this._handleInputFocus : null}
-            onKeyDown={!this.props.disabled ? this._handleInputKeyDown : null}
+            disabled={this.props.disabled} onBlur={this._handleInputBlur}
+            onChange={this._handleInputChange} onFocus={this._handleInputFocus}
+            onKeyDown={this._handleInputKeyDown}
             readOnly={!this.props.filterable} ref="input" spellCheck={false}
-            type="text"
-            value={this.props.filterable && this.state.focus ? this.state.filterInputValue : this._selectedItemsInputValue} />
+            type="text" value={value} />
           <span className={this.props.classNames.arrow} />
         </div>
         {this._renderList()}
@@ -65,7 +64,7 @@ export default class Multiselect extends Component {
   }
 
   _renderList() {
-    return this.state.open && !this.props.disabled ? (
+    return !this.props.disabled && this.state.open ? (
       <ul className={this.props.classNames.items}
         onMouseLeave={this._handleItemsMouseLeave} ref="items">
         {this._renderListItems()}
@@ -166,13 +165,15 @@ export default class Multiselect extends Component {
   }
 
   _handleInputBlur() {
-    this.setState({
-      focus: false,
-      open: false,
-      filteredItems: this._normalizedItems,
-      filterInputValue: '',
-      hoverIndex: null
-    });
+    if (this.state.focus) {
+      this.setState({
+        focus: false,
+        open: false,
+        filteredItems: this._normalizedItems,
+        filterInputValue: '',
+        hoverIndex: null
+      });
+    }
   }
 
   _handleInputChange(e) {
@@ -189,20 +190,26 @@ export default class Multiselect extends Component {
   }
 
   _handleInputFocus() {
-    this.setState({ focus: true });
+    if (!this.props.disabled && !this.state.focus) {
+      this.setState({ focus: true });
+    }
   }
 
   _handleInputKeyDown(e) {
-    const handler = this._inputKeyDownHandlers[e.keyCode];
-    if (handler) {
-      handler.call(this, e);
+    if (!this.props.disabled) {
+      const handler = this._inputKeyDownHandlers[e.keyCode];
+      if (handler) {
+        handler.call(this, e);
+      }
     }
   }
 
   _handleInputOrArrowMouseDown(e) {
     e.preventDefault();
-    React.findDOMNode(this.refs.input).focus();
-    this.setState({ open: true });
+    if (!this.props.disabled && !this.state.open) {
+      React.findDOMNode(this.refs.input).focus();
+      this.setState({ open: true });
+    }
   }
 
   _handleInputReturn(e) {
@@ -331,6 +338,7 @@ Multiselect.propTypes = {
     multiselectOpen: PropTypes.string,
     option: PropTypes.string
   }),
+  disabled: PropTypes.bool,
   filterable: PropTypes.bool.isRequired,
   inputProps: PropTypes.shape({
     autoFocus: PropTypes.bool,
@@ -360,7 +368,6 @@ Multiselect.propTypes = {
       })
     )
   ]).isRequired,
-  disabled: PropTypes.bool,
   onItemSelected: PropTypes.func
 };
 
@@ -379,6 +386,7 @@ Multiselect.defaultProps = {
     multiselectOpen: 'multiselectOpen',
     option: 'multiselectOption'
   },
+  disabled: false,
   filterable: true,
   inputProps: {
     autoFocus: false,
@@ -386,6 +394,5 @@ Multiselect.defaultProps = {
     placeholder: '',
     size: 100
   },
-  disabled: false,
   onItemSelected: () => {}
 };
