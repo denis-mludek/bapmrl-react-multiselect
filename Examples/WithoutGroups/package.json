@@ -1,0 +1,26 @@
+{
+  "name": "bapmrl-react-multiselect-example-without-groups",
+  "author": "Baptiste Morelle",
+  "license": "MIT",
+  "private": true,
+  "version": "1.0.0",
+  "main": "index.js",
+  "browserify": {
+    "transform": [
+      "babelify"
+    ]
+  },
+  "scripts": {
+    "start": "budo index.js:bundle.js | garnish"
+  },
+  "dependencies": {
+    "bapmrl-react-multiselect": "file:../..",
+    "react": ">= 0.13.0"
+  },
+  "devDependencies": {
+    "babelify": "~6.3.0",
+    "browserify": "~11.0.1",
+    "budo": "~5.1.0",
+    "garnish": "~3.2.1"
+  }
+}
