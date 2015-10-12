@@ -1,4 +1,5 @@
 import React, { Component, PropTypes } from 'react';
+import ReactDOM from 'react-dom';
 
 import shallowEqual from './shallowEqual';
 
@@ -132,8 +133,8 @@ export default class Multiselect extends Component {
   }
 
   _handleDocumentMouseDown(e) {
-    const inputNode = React.findDOMNode(this.refs.input);
-    const itemsNode = React.findDOMNode(this.refs.items);
+    const inputNode = ReactDOM.findDOMNode(this.refs.input);
+    const itemsNode = ReactDOM.findDOMNode(this.refs.items);
     if (!e.path.find(n => n === inputNode || n === itemsNode)) {
       inputNode.blur();
       this.setState({
@@ -208,7 +209,7 @@ export default class Multiselect extends Component {
   _handleInputOrArrowMouseDown(e) {
     e.preventDefault();
     if (!this.props.disabled && !this.state.open) {
-      React.findDOMNode(this.refs.input).focus();
+      ReactDOM.findDOMNode(this.refs.input).focus();
       this.setState({ open: true });
     }
   }

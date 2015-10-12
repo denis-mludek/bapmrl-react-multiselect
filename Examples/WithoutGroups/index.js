@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
 import Multiselect from 'bapmrl-react-multiselect';
 
 class WithoutGroups extends Component {
@@ -39,4 +40,4 @@ class WithoutGroups extends Component {
   }
 }
 
-React.render(<WithoutGroups />, document.body);
+ReactDOM.render(<WithoutGroups />, document.getElementById('example-container'));
