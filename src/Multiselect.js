@@ -85,8 +85,8 @@ export default class Multiselect extends Component {
         <li className={className} key={item.key}
           onMouseDown={this._handleItemMouseDown(i)}
           onMouseMove={this._handleItemMouseMove(i)}>
-          <span className={this.props.classNames.label}>{item.label}</span>
-          <span className={this.props.classNames.checkbox}></span>
+          <span className={this.props.classNames.label} ref={'msLabel' + i}>{item.label}</span>
+          <span className={this.props.classNames.checkbox} ref={'msCheck' + i}></span>
         </li>
       );
     });
@@ -135,7 +135,7 @@ export default class Multiselect extends Component {
   _handleDocumentMouseDown(e) {
     const inputNode = ReactDOM.findDOMNode(this.refs.input);
     const itemsNode = ReactDOM.findDOMNode(this.refs.items);
-    if (!e.path.find(n => n === inputNode || n === itemsNode)) {
+    if (e && e.path && !e.path.find(n => n === inputNode || n === itemsNode)) {
       inputNode.blur();
       this.setState({
         focus: false,
@@ -143,8 +143,23 @@ export default class Multiselect extends Component {
         filteredItems: this._normalizedItems,
         filterInputValue: ''
       });
-    } else if (e.path.find(n => n === itemsNode)) {
+    } else if (e && e.path && e.path.find(n => n === itemsNode)) {
       e.preventDefault();
+    } else {
+      //In case of IE11, e.path is undefined. So below is the workaround
+      const isItemCheckBox = this.state.filteredItems.reduce((acc, item, i) => acc || e.target === ReactDOM.findDOMNode(this.refs['msCheck'+ i]), false);
+      const isItemLabel = this.state.filteredItems.reduce((acc, item, i) => acc || e.target === ReactDOM.findDOMNode(this.refs['msLabel'+ i]), false);
+      if(isItemCheckBox || isItemLabel) {
+        e.preventDefault();
+      } else {
+        inputNode.blur();
+        this.setState({
+          focus: false,
+          open: false,
+          filteredItems: this._normalizedItems,
+          filterInputValue: ''
+        });
+      }
     }
   }
 
